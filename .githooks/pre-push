@@ -1,0 +1,2 @@
+#!/bin/sh
+exec moon run tools/identity.mbtx

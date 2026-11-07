@@ -1,0 +1,56 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "hxiuzheng/zhenread"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn check(String, Profile, vtt? : Bool) -> Report
+
+pub fn chinese_profile() -> Profile
+
+pub fn english_profile() -> Profile
+
+pub fn html_report(Report) -> String
+
+pub fn parse(String, vtt? : Bool) -> Report
+
+pub fn parse_timestamp(String, vtt? : Bool) -> Int?
+
+pub fn visible_count(String) -> Int
+
+// Errors
+
+// Types and methods
+pub struct Cue {
+  id : String
+  line : Int
+  start_ms : Int
+  end_ms : Int
+  text : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct Finding {
+  rule : String
+  severity : String
+  line : Int
+  cue : String
+  message : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct Profile {
+  max_cps : Int
+  max_line_chars : Int
+  max_lines : Int
+  min_duration_ms : Int
+} derive(@debug.Debug)
+
+pub struct Report {
+  cues : Array[Cue]
+  findings : Array[Finding]
+} derive(ToJson, @debug.Debug)
+
+// Type aliases
+
+// Traits

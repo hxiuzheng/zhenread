@@ -1,0 +1,41 @@
+import {
+  "moonbitlang/async@0.21.3",
+  "moonbitlang/async@0.21.3/shell",
+  "moonbitlang/x@0.5.5/sys",
+}
+
+async fn expect(program : String, arguments : Array[String], expected : String) -> Unit {
+  let result = @shell.Cmd(program, arguments).output()
+  if result.exit_code() != 0 || result.stdout().trim() != expected {
+    println("Identity check rejected the operation. Sign in as hxiuzheng and restore repository identity settings.")
+    @sys.exit(1)
+  }
+}
+
+async fn main {
+  expect("gh", ["api", "user", "--jq", ".login"], "hxiuzheng")
+  expect("git", ["config", "user.name"], "hxiuzheng")
+  expect("git", ["config", "user.email"], "244738971+hxiuzheng@users.noreply.github.com")
+  for kind in ["GIT_AUTHOR_IDENT", "GIT_COMMITTER_IDENT"] {
+    let result = @shell.Cmd("git", ["var", kind]).output()
+    if result.exit_code() != 0 || !result.stdout().has_prefix("hxiuzheng <244738971+hxiuzheng@users.noreply.github.com> ") {
+      println("Author or committer override rejected.")
+      @sys.exit(1)
+    }
+  }
+  let history = @shell.Cmd("git", ["log", "--all", "--format=%an <%ae>|%cn <%ce>"]).output()
+  if history.exit_code() == 0 {
+    for line in history.stdout().split("\n") {
+      if !line.trim().is_empty() && line.trim() != "hxiuzheng <244738971+hxiuzheng@users.noreply.github.com>|hxiuzheng <244738971+hxiuzheng@users.noreply.github.com>" {
+        println("History contains an unexpected author or committer.")
+        @sys.exit(1)
+      }
+    }
+  }
+  let remote = @shell.Cmd("git", ["remote", "get-url", "--push", "origin"]).output()
+  if remote.exit_code() == 0 && remote.stdout().trim() != "https://github.com/hxiuzheng/zhenread.git" {
+    println("Unexpected push destination.")
+    @sys.exit(1)
+  }
+  println("Identity verified: hxiuzheng.")
+}
