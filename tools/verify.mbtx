@@ -54,10 +54,15 @@ async fn main {
     (["check", "examples/clean.srt"], 0),
     (["check", "examples/review.vtt"], 0),
     (["check", "examples/review.vtt", "--strict"], 1),
+    (["check", "examples/recovery.vtt"], 1),
     (["check", "examples/clean.srt", "--output", "json"], 0),
     (["check", "examples/clean.srt", "--profile", "invalid"], 2),
     (["check", "examples/clean.srt", "--profile"], 2),
     (["check", "missing.srt"], 2),
+    (["compare", "examples/revision-before.vtt", "examples/revision-before.vtt"], 0),
+    (["compare", "examples/revision-before.vtt", "examples/revision-after.vtt", "--output", "json"], 1),
+    (["compare", "examples/revision-before.vtt", "examples/recovery.vtt"], 2),
+    (["compare", "examples/revision-before.vtt", "examples/revision-after.vtt", "--tolerance-ms", "-1"], 2),
   ]
   for (args, expected) in cases {
     let result = @shell.Cmd("moon", ["run", "cmd/main", "--"] + args).output()

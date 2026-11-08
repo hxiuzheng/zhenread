@@ -27,16 +27,44 @@ extern "js" fn create_report(
   #| }
 
 ///|
-fn main {
-  // The JavaScript target exposes Node's executable and script as argv[0:2].
-  // Retain the script slot to match the conventional executable argv layout.
-  let args = @env.args()[1:].to_owned()
-  if args.length() < 3 || args[1] != "check" {
-    println(
-      "ZhenRead / 帧读\nUsage: check INPUT [--profile zh|en] [--output text|json|html] [--report FILE] [--strict]\nExit: 0 accepted, 1 findings, 2 usage or I/O error",
-    )
-    @sys.exit(if args.length() == 2 && args[1] == "--help" { 0 } else { 2 })
+fn read_source(path : String) -> String {
+  let bytes = @fs.read_file_to_bytes(path) catch {
+    _ => {
+      println("Unable to read subtitle input.")
+      @sys.exit(2)
+      b""
+    }
   }
+  @utf8.decode(bytes[:]) catch {
+    _ => {
+      println("Subtitle input must be valid UTF-8.")
+      @sys.exit(2)
+      ""
+    }
+  }
+}
+
+///|
+fn output_report(rendered : String, report_file : String?) -> Unit {
+  match report_file {
+    Some(path) =>
+      match create_report(write_file_sync, path, rendered) {
+        0 => ()
+        1 => {
+          println("Report path already exists. Choose a new path.")
+          @sys.exit(2)
+        }
+        _ => {
+          println("Unable to create report.")
+          @sys.exit(2)
+        }
+      }
+    None => println(rendered)
+  }
+}
+
+///|
+fn run_check(args : Array[String]) -> Unit {
   let input = args[2]
   let mut profile = "zh"
   let mut output = "text"
@@ -75,13 +103,7 @@ fn main {
     println("Input must be an SRT or VTT file.")
     @sys.exit(2)
   }
-  let source = @fs.read_file_to_string(input) catch {
-    _ => {
-      println("Unable to read subtitle input as UTF-8.")
-      @sys.exit(2)
-      ""
-    }
-  }
+  let source = read_source(input)
   let report = @lib.check(
     source,
     if profile == "zh" {
@@ -107,22 +129,24 @@ fn main {
       text.to_string()
     }
   }
-  match report_file {
-    Some(path) =>
-      match create_report(write_file_sync, path, rendered) {
-        0 => ()
-        1 => {
-          println("Report path already exists. Choose a new path.")
-          @sys.exit(2)
-        }
-        _ => {
-          println("Unable to create report.")
-          @sys.exit(2)
-        }
-      }
-    None => println(rendered)
-  }
+  output_report(rendered, report_file)
   if report.findings.any(f => f.severity == "error" || strict) {
     @sys.exit(1)
+  }
+}
+
+///|
+fn main {
+  // Retain Node's script slot to match the conventional executable argv layout.
+  let args = @env.args()[1:].to_owned()
+  if args.length() >= 3 && args[1] == "check" {
+    run_check(args)
+  } else if args.length() >= 4 && args[1] == "compare" {
+    run_compare(args)
+  } else {
+    println(
+      "ZhenRead / 帧读\nUsage: check INPUT [--profile zh|en] [--output text|json|html] [--report FILE] [--strict]\n       compare BASELINE.vtt CANDIDATE.vtt [--tolerance-ms N] [--output text|json] [--report FILE]\nExit: 0 accepted, 1 findings or changes, 2 invalid input or usage/I/O error",
+    )
+    @sys.exit(if args.length() == 2 && args[1] == "--help" { 0 } else { 2 })
   }
 }
