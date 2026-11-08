@@ -1,34 +1,65 @@
 ///|
+#derive(Debug, Eq, ToJson)
 pub struct Cue {
   id : String
-  line : Int
-  start_ms : Int
-  end_ms : Int
+  line : Int32
+  start_ms : Int32
+  end_ms : Int32
   text : String
-} derive(Debug, Eq, ToJson)
+}
 
 ///|
+pub extend Cue with @debug.Debug::{to_repr}
+
+///|
+pub extend Cue with Eq::{equal, not_equal}
+
+///|
+pub extend Cue with ToJson::{to_json}
+
+///|
+#derive(Debug, Eq, ToJson)
 pub struct Finding {
   rule : String
   severity : String
-  line : Int
+  line : Int32
   cue : String
   message : String
-} derive(Debug, Eq, ToJson)
+}
 
 ///|
+pub extend Finding with @debug.Debug::{to_repr}
+
+///|
+pub extend Finding with Eq::{equal, not_equal}
+
+///|
+pub extend Finding with ToJson::{to_json}
+
+///|
+#derive(Debug, ToJson)
 pub struct Report {
   cues : Array[Cue]
   findings : Array[Finding]
-} derive(Debug, ToJson)
+}
 
 ///|
+pub extend Report with @debug.Debug::{to_repr}
+
+///|
+pub extend Report with ToJson::{to_json}
+
+///|
+#derive(Debug)
 pub(all) struct Profile {
-  max_cps : Int
-  max_line_chars : Int
-  max_lines : Int
-  min_duration_ms : Int
-} derive(Debug)
+  max_cps : Int32
+  max_line_chars : Int32
+  max_lines : Int32
+  min_duration_ms : Int32
+}
+
+///|
+pub extend Profile with @debug.Debug::{to_repr}
 
 ///|
 /// Editorial defaults, not a certification of accessibility compliance.
@@ -42,7 +73,7 @@ pub fn english_profile() -> Profile {
 }
 
 ///|
-fn digits(s : String, width : Int) -> Int? {
+fn digits(s : String, width : Int32) -> Int32? {
   if s.length() != width {
     return None
   }
@@ -58,7 +89,7 @@ fn digits(s : String, width : Int) -> Int? {
 
 ///|
 /// Supports SRT HH:MM:SS,mmm and WebVTT [HH:]MM:SS.mmm.
-pub fn parse_timestamp(value : String, vtt? : Bool = false) -> Int? {
+pub fn parse_timestamp(value : String, vtt~ : Bool = false) -> Int32? {
   let fields = value.split(":").map(s => s.to_owned()).collect()
   let (hours, minutes, seconds) = match fields.length() {
     3 => (fields[0], fields[1], fields[2])
@@ -82,7 +113,7 @@ pub fn parse_timestamp(value : String, vtt? : Bool = false) -> Int? {
 
 ///|
 /// Parse independently delimited cue blocks, retaining source line numbers.
-pub fn parse(source : String, vtt? : Bool = false) -> Report {
+pub fn parse(source : String, vtt~ : Bool = false) -> Report {
   let text = source
     .replace_all(old="\r\n", new="\n")
     .replace_all(old="\r", new="\n")
@@ -183,7 +214,7 @@ pub fn parse(source : String, vtt? : Bool = false) -> Report {
 ///|
 /// Count Unicode scalar values, excluding whitespace and inline markup.
 /// Complex grapheme clusters may count as several values; thresholds are configurable.
-pub fn visible_count(text : String) -> Int {
+pub fn visible_count(text : String) -> Int32 {
   let mut count = 0
   let mut tag = false
   for c in text.iter() {
@@ -199,7 +230,7 @@ pub fn visible_count(text : String) -> Int {
 }
 
 ///|
-pub fn check(source : String, profile : Profile, vtt? : Bool = false) -> Report {
+pub fn check(source : String, profile : Profile, vtt~ : Bool = false) -> Report {
   let report = parse(source, vtt~)
   let findings = report.findings
   let mut previous_start = -1

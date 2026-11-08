@@ -3,6 +3,7 @@ package "hxiuzheng/zhenread"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -16,40 +17,55 @@ pub fn html_report(Report) -> String
 
 pub fn parse(String, vtt? : Bool) -> Report
 
-pub fn parse_timestamp(String, vtt? : Bool) -> Int?
+pub fn parse_timestamp(String, vtt? : Bool) -> Int32?
 
-pub fn visible_count(String) -> Int
+pub fn visible_count(String) -> Int32
 
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct Cue {
   id : String
-  line : Int
-  start_ms : Int
-  end_ms : Int
+  line : Int32
+  start_ms : Int32
+  end_ms : Int32
   text : String
-} derive(Eq, ToJson, @debug.Debug)
+}
+pub fn Cue::equal(Self, Self) -> Bool
+pub fn Cue::not_equal(Self, Self) -> Bool
+pub fn Cue::to_json(Self) -> @json.Json
+pub fn Cue::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct Finding {
   rule : String
   severity : String
-  line : Int
+  line : Int32
   cue : String
   message : String
-} derive(Eq, ToJson, @debug.Debug)
+}
+pub fn Finding::equal(Self, Self) -> Bool
+pub fn Finding::not_equal(Self, Self) -> Bool
+pub fn Finding::to_json(Self) -> @json.Json
+pub fn Finding::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub(all) struct Profile {
-  max_cps : Int
-  max_line_chars : Int
-  max_lines : Int
-  min_duration_ms : Int
-} derive(@debug.Debug)
+  max_cps : Int32
+  max_line_chars : Int32
+  max_lines : Int32
+  min_duration_ms : Int32
+}
+pub fn Profile::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug, @json.ToJson)
 pub struct Report {
   cues : Array[Cue]
   findings : Array[Finding]
-} derive(ToJson, @debug.Debug)
+}
+pub fn Report::to_json(Self) -> @json.Json
+pub fn Report::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

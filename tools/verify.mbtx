@@ -1,7 +1,9 @@
+----
 import {
   "moonbitlang/async@0.21.3",
   "moonbitlang/async@0.21.3/shell",
 }
+----
 
 async fn main {
   let checks = [

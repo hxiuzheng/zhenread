@@ -6,7 +6,7 @@
 
 ## 命令行
 
-需要 MoonBit 工具链和 Node.js。命令行使用 JavaScript 目标。
+需要带有 `v0.10.20` 编译器的 MoonBit 工具链和 Node.js。命令行使用 JavaScript 目标，可通过 `moon version --all` 查看编译器版本。
 
 ```sh
 git clone https://github.com/hxiuzheng/zhenread.git
