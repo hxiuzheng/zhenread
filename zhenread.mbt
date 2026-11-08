@@ -123,8 +123,11 @@ pub fn parse_timestamp(value : String, vtt~ : Bool = false) -> Int32? {
 }
 
 ///|
-/// Parse independently delimited cue blocks, retaining source line numbers.
-pub fn parse(source : String, vtt~ : Bool = false) -> Report {
+fn parse_cues(
+  source : String,
+  vtt~ : Bool,
+  require_ids~ : Bool = false,
+) -> Report {
   let text = source
     .replace_all(old="\r\n", new="\n")
     .replace_all(old="\r", new="\n")
@@ -221,6 +224,16 @@ pub fn parse(source : String, vtt~ : Bool = false) -> Report {
       invalid("Invalid end timestamp.")
       continue
     }
+    if require_ids && timing_index == begin {
+      findings.push({
+        rule: "REVISION_ID_REQUIRED",
+        severity: "error",
+        line: begin + 1,
+        cue: "",
+        message: "Assign a stable WebVTT cue identifier before comparing revisions.",
+      })
+      continue
+    }
     let body = StringBuilder()
     for n = timing_index + 1; n < i; n = n + 1 {
       if n > timing_index + 1 {
@@ -230,7 +243,7 @@ pub fn parse(source : String, vtt~ : Bool = false) -> Report {
     }
     cues.push({ id, line: begin + 1, start_ms, end_ms, text: body.to_string(), })
   }
-  if cues.is_empty() {
+  if cues.is_empty() && !require_ids {
     findings.push({
       rule: "NO_CUES",
       severity: "error",
@@ -240,6 +253,12 @@ pub fn parse(source : String, vtt~ : Bool = false) -> Report {
     })
   }
   { cues, findings, }
+}
+
+///|
+/// Parse independently delimited cue blocks, retaining source line numbers.
+pub fn parse(source : String, vtt~ : Bool = false) -> Report {
+  parse_cues(source, vtt~)
 }
 
 ///|

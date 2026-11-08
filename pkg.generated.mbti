@@ -11,6 +11,8 @@ pub fn check(String, Profile, vtt? : Bool) -> Report
 
 pub fn chinese_profile() -> Profile
 
+pub fn compare_revisions(String, String, tolerance_ms? : Int32) -> RevisionReport
+
 pub fn english_profile() -> Profile
 
 pub fn html_report(Report) -> String
@@ -66,6 +68,28 @@ pub struct Report {
 }
 pub fn Report::to_json(Self) -> @json.Json
 pub fn Report::to_repr(Self) -> @debug.Repr
+
+#derive(@debug.Debug, @json.ToJson)
+pub struct RevisionChange {
+  kind : String
+  id : String
+  before : Cue?
+  after : Cue?
+  text_changed : Bool
+  timing_changed : Bool
+}
+pub fn RevisionChange::to_json(Self) -> @json.Json
+pub fn RevisionChange::to_repr(Self) -> @debug.Repr
+
+#derive(@debug.Debug, @json.ToJson)
+pub struct RevisionReport {
+  baseline_findings : Array[Finding]
+  candidate_findings : Array[Finding]
+  changes : Array[RevisionChange]
+}
+pub fn RevisionReport::is_comparable(Self) -> Bool
+pub fn RevisionReport::to_json(Self) -> @json.Json
+pub fn RevisionReport::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 
