@@ -1,4 +1,32 @@
 ///|
+#external
+priv type ReportWriteOptions
+
+///|
+#module("node:fs")
+extern "js" fn write_file_sync(
+  path : String,
+  content : String,
+  options : ReportWriteOptions,
+) -> Unit = "writeFileSync"
+
+///|
+// Exclusive creation preserves existing files, including when writers race.
+extern "js" fn create_report(
+  write_file : (String, String, ReportWriteOptions) -> Unit,
+  path : String,
+  content : String,
+) -> Int32 =
+  #| (writeFile, path, content) => {
+  #|   try {
+  #|     writeFile(path, content, { encoding: "utf8", flag: "wx" });
+  #|     return 0;
+  #|   } catch (error) {
+  #|     return error.code === "EEXIST" ? 1 : 2;
+  #|   }
+  #| }
+
+///|
 fn main {
   // The JavaScript target exposes Node's executable and script as argv[0:2].
   // Retain the script slot to match the conventional executable argv layout.
@@ -81,9 +109,14 @@ fn main {
   }
   match report_file {
     Some(path) =>
-      @fs.write_string_to_file(path, rendered) catch {
+      match create_report(write_file_sync, path, rendered) {
+        0 => ()
+        1 => {
+          println("Report path already exists. Choose a new path.")
+          @sys.exit(2)
+        }
         _ => {
-          println("Unable to write report.")
+          println("Unable to create report.")
           @sys.exit(2)
         }
       }

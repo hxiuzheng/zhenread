@@ -265,6 +265,16 @@ pub fn visible_count(text : String) -> Int32 {
 }
 
 ///|
+fn compare_cues(a : Cue, b : Cue) -> Int32 {
+  let order = a.start_ms.compare(b.start_ms)
+  if order == 0 {
+    a.line.compare(b.line)
+  } else {
+    order
+  }
+}
+
+///|
 pub fn check(source : String, profile : Profile, vtt~ : Bool = false) -> Report {
   let report = parse(source, vtt~)
   let findings = report.findings
@@ -305,14 +315,7 @@ pub fn check(source : String, profile : Profile, vtt~ : Bool = false) -> Report 
     }
   }
   let ordered = report.cues.filter(c => c.end_ms > c.start_ms)
-  ordered.sort_by((a, b) => {
-    let order = a.start_ms.compare(b.start_ms)
-    if order == 0 {
-      a.line.compare(b.line)
-    } else {
-      order
-    }
-  })
+  ordered.sort_by(compare_cues)
   let mut latest_end = -1
   for cue in ordered {
     if cue.start_ms < latest_end {
@@ -342,6 +345,10 @@ fn escape_html(s : String) -> String {
 ///|
 /// Self-contained, script-free report. No filenames or machine paths are embedded.
 pub fn html_report(report : Report) -> String {
+  let cue_lines : Map[Int32, Unit] = Map([])
+  for cue in report.cues {
+    cue_lines.set(cue.line, ())
+  }
   let out = StringBuilder()
   out.write_string(
     "<!doctype html><html lang=\"zh-CN\"><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width\"><title>帧读 ZhenRead · 字幕质检</title><style>body{margin:0;background:#101c27;color:#e7eef1;font:16px system-ui;line-height:1.6}main{max-width:960px;margin:auto;padding:32px}h1{color:#65dec4}a{color:#65dec4}.card{padding:20px;margin:16px 0;border:1px solid #45606e;border-radius:12px}pre{white-space:pre-wrap;overflow-wrap:anywhere}small{color:#b4c4ce}:target{outline:2px solid #65dec4}</style><main><h1>帧读 ZhenRead</h1><p>字幕阅读质量检查 · 阈值提示不等于无障碍认证</p>",
@@ -350,12 +357,19 @@ pub fn html_report(report : Report) -> String {
     "<p>\{report.cues.length()} cues · \{report.findings.length()} findings</p><h2>检查结果</h2><ul>",
   )
   for f in report.findings {
+    let location = if cue_lines.contains(f.line) {
+      "<a href=\"#line-\{f.line}\">Line \{f.line}</a>"
+    } else {
+      "Source line \{f.line}"
+    }
     out.write_string(
-      "<li><a href=\"#line-\{f.line}\">Line \{f.line}</a> · \{escape_html(f.rule)} · \{escape_html(f.severity)} — \{escape_html(f.message)}</li>",
+      "<li>\{location} · \{escape_html(f.rule)} · \{escape_html(f.severity)} — \{escape_html(f.message)}</li>",
     )
   }
   out.write_string("</ul><h2>字幕时间顺序</h2>")
-  for cue in report.cues {
+  let ordered = report.cues.copy()
+  ordered.sort_by(compare_cues)
+  for cue in ordered {
     out.write_string(
       "<article class=\"card\" id=\"line-\{cue.line}\"><small>\{cue.start_ms}–\{cue.end_ms} ms · Line \{cue.line} · \{escape_html(cue.id)}</small><pre>\{escape_html(cue.text)}</pre></article>",
     )

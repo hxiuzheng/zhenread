@@ -1,9 +1,43 @@
 ----
 import {
   "moonbitlang/async@0.21.3",
+  "moonbitlang/async@0.21.3/fs",
   "moonbitlang/async@0.21.3/shell",
 }
 ----
+
+async fn verify_report_files() -> Unit {
+  @async.with_task_group(group => {
+    let dir = @fs.tmpdir(prefix="zhenread-report")
+    let input = "\{dir}/source.srt"
+    let report = "\{dir}/report.html"
+    group.add_defer(() => {
+      @async.protect_from_cancel(() => {
+        if @fs.exists(report) {
+          @fs.remove(report)
+        }
+        if @fs.exists(input) {
+          @fs.remove(input)
+        }
+        @fs.rmdir(dir)
+      })
+    })
+    let original = "1\n00:00:01,000 --> 00:00:03,000\n你好\n"
+    @fs.write_file(input, original)
+    let args = ["run", "cmd/main", "--", "check", input, "--output", "html"]
+    let rejected = @shell.Cmd("moon", args + ["--report", input]).output()
+    assert_eq(rejected.exit_code(), 2)
+    assert_eq(@fs.read_file(input).text(), original)
+    let written = @shell.Cmd("moon", args + ["--report", report]).output()
+    assert_eq(written.exit_code(), 0)
+    let content = @fs.read_file(report).text()
+    assert_true(content.contains("你好"))
+    assert_true(content.contains("id=\"line-1\""))
+    let repeated = @shell.Cmd("moon", args + ["--report", report]).output()
+    assert_eq(repeated.exit_code(), 2)
+    assert_eq(@fs.read_file(report).text(), content)
+  })
+}
 
 async fn main {
   let checks = [
@@ -29,5 +63,7 @@ async fn main {
     let result = @shell.Cmd("moon", ["run", "cmd/main", "--"] + args).output()
     assert_eq(result.exit_code(), expected)
   }
+  verify_report_files()
   println("CLI cases: \{cases.length()} passed.")
+  println("Report file checks: creation and overwrite protection passed.")
 }

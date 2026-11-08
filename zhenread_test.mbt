@@ -191,3 +191,32 @@ test "unfinished angle markup leaves literal text visible" {
   assert_eq(@zhenread.visible_count("x < y"), 3)
   assert_eq(@zhenread.visible_count("<b>字幕</b> <未结束"), 6)
 }
+
+///|
+test "HTML keeps malformed source locations readable and links valid cues" {
+  let r = @zhenread.check(
+    "1\ninvalid\nBroken\n\n2\n00:00:03,000 --> 00:00:03,200\nFast",
+    @zhenread.english_profile(),
+  )
+  let html = @zhenread.html_report(r)
+  assert_true(html.contains("Source line 1"))
+  assert_true(!html.contains("href=\"#line-1\""))
+  assert_true(html.contains("href=\"#line-5\""))
+  assert_true(html.contains("id=\"line-5\""))
+}
+
+///|
+test "HTML orders cues by playback time without changing the source order" {
+  let r = @zhenread.parse(
+    "1\n00:00:10,000 --> 00:00:12,000\nlater\n\n2\n00:00:01,000 --> 00:00:03,000\nearlier",
+  )
+  let html = @zhenread.html_report(r)
+  guard html.find("id=\"line-1\"") is Some(later) else {
+    fail("missing later cue")
+  }
+  guard html.find("id=\"line-5\"") is Some(earlier) else {
+    fail("missing earlier cue")
+  }
+  assert_true(earlier < later)
+  assert_eq(r.cues[0].line, 1)
+}
