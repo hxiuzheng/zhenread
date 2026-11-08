@@ -2,7 +2,7 @@
 
 让字幕在发布之前，更好读一点。
 
-帧读是面向课程、短视频和培训内容的字幕质量检查工具，使用 MoonBit 实现。输入 SRT 或 WebVTT 字幕，输出带规则编号、严重程度和源文件行号的诊断，帮助内容制作者在发布前复核字幕。
+帧读使用 MoonBit 实现字幕质量检查和修订回归。内容制作者可以检查单份 SRT 或 WebVTT，也可以比较审定版与待发布版 WebVTT，查看字幕增删、改字和时间漂移。
 
 ## 命令行
 
@@ -25,6 +25,16 @@ moon run cmd/main -- check examples/review.vtt --output html --report preview.ht
 | 0 | 检查通过。默认允许警告 |
 | 1 | 有错误，或使用 `--strict` 时有警告 |
 | 2 | 参数无效或文件读写失败 |
+
+## 修订回归
+
+两版 WebVTT 的每条字幕需要有显式且唯一的 ID，例如 `definition`。同一条字幕在修订前后保留相同 ID。对比通过 ID 匹配，报告两版的行号、时间和文字；缺少或重复 ID 会在对应版本中报错。
+
+```sh
+moon run cmd/main -- compare examples/revision-before.vtt examples/revision-after.vtt --output html --report revision-review.html
+```
+
+使用 `--tolerance-ms N` 忽略不超过 N 毫秒的起点和终点偏移，默认值为 0。文字按规范化换行后的正文逐字比较。更换 ID 会被视为删除旧字幕与新增新字幕。支持文本、JSON 和离线并排 HTML，退出码 0 表示无变更、1 表示发现变更、2 表示输入或参数不可用。
 
 ## 验证
 
@@ -49,7 +59,7 @@ test "check a Chinese cue" {
 }
 ```
 
-WebVTT 文本需设置 `vtt=true`。可使用 `english_profile()`，或构造 `Profile` 自定义阈值。接口清单见 `pkg.generated.mbti`。
+WebVTT 文本需设置 `vtt=true`。可使用 `english_profile()`，或构造 `Profile` 自定义阈值。修订回归使用 `compare_revisions` 和 `revision_html_report`。接口清单见 `pkg.generated.mbti`。
 
 ## 检查内容
 
@@ -81,5 +91,7 @@ HTML 报告按播放时间显示字幕。可解析的字幕诊断支持跳转，
 
 - [开发与验证记录](docs/DEVELOPMENT.md)
 - [来源与独立贡献](docs/SOURCES.md)
+- [申报事实与场景核对](docs/PROPOSAL.md)
+- [验收复现与参赛核对](docs/ACCEPTANCE.md)
 
 Mooncakes 包尚未发布；当前请从本仓库运行与评估。
