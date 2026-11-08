@@ -47,3 +47,30 @@ test "valid empty revisions detect complete removal or first additions" {
   assert_eq(@zhenread.compare_revisions(empty, one).changes[0].kind, "added")
   assert_true(!@zhenread.compare_revisions(one, "").is_comparable())
 }
+
+///|
+test "revision HTML escapes cue content and links to side-by-side changes" {
+  let baseline = "WEBVTT\n\n<x>\n00:01.000 --> 00:02.000\n旧版"
+  let candidate = "WEBVTT\n\n<x>\n00:01.100 --> 00:02.000\n<script>alert(1)</script>"
+  let html = @zhenread.revision_html_report(
+    @zhenread.compare_revisions(baseline, candidate),
+  )
+  assert_true(html.contains("href=\"#change-1\""))
+  assert_true(html.contains("id=\"change-1\""))
+  assert_true(html.contains("文字与时间变更"))
+  assert_true(html.contains("旧版"))
+  assert_true(html.contains("&lt;x&gt;"))
+  assert_true(html.contains("&lt;script&gt;"))
+  assert_true(!html.contains("<script>"))
+}
+
+///|
+test "revision HTML names the side with invalid input" {
+  let candidate = "WEBVTT\n\n00:01.000 --> 00:02.000\n无标识"
+  let html = @zhenread.revision_html_report(
+    @zhenread.compare_revisions("WEBVTT\n\n", candidate),
+  )
+  assert_true(html.contains("待发布版"))
+  assert_true(html.contains("REVISION_ID_REQUIRED"))
+  assert_true(!html.contains("href=\"#change-"))
+}

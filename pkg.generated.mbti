@@ -21,6 +21,8 @@ pub fn parse(String, vtt? : Bool) -> Report
 
 pub fn parse_timestamp(String, vtt? : Bool) -> Int32?
 
+pub fn revision_html_report(RevisionReport) -> String
+
 pub fn visible_count(String) -> Int32
 
 // Errors

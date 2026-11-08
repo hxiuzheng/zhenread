@@ -77,7 +77,7 @@ fn run_compare(args : Array[String]) -> Unit {
     println("Timing tolerance must be a non-negative integer.")
     @sys.exit(2)
   }
-  if output != "text" && output != "json" {
+  if output != "text" && output != "json" && output != "html" {
     println("Unsupported revision report format.")
     @sys.exit(2)
   }
@@ -86,10 +86,10 @@ fn run_compare(args : Array[String]) -> Unit {
     read_source(candidate),
     tolerance_ms=tolerance,
   )
-  let rendered = if output == "json" {
-    report.to_json().stringify()
-  } else {
-    revision_text(report)
+  let rendered = match output {
+    "json" => report.to_json().stringify()
+    "html" => @lib.revision_html_report(report)
+    _ => revision_text(report)
   }
   output_report(rendered, report_file)
   if !report.is_comparable() {

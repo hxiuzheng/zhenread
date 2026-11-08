@@ -145,7 +145,7 @@ fn main {
     run_compare(args)
   } else {
     println(
-      "ZhenRead / 帧读\nUsage: check INPUT [--profile zh|en] [--output text|json|html] [--report FILE] [--strict]\n       compare BASELINE.vtt CANDIDATE.vtt [--tolerance-ms N] [--output text|json] [--report FILE]\nExit: 0 accepted, 1 findings or changes, 2 invalid input or usage/I/O error",
+      "ZhenRead / 帧读\nUsage: check INPUT [--profile zh|en] [--output text|json|html] [--report FILE] [--strict]\n       compare BASELINE.vtt CANDIDATE.vtt [--tolerance-ms N] [--output text|json|html] [--report FILE]\nExit: 0 accepted, 1 findings or changes, 2 invalid input or usage/I/O error",
     )
     @sys.exit(if args.length() == 2 && args[1] == "--help" { 0 } else { 2 })
   }

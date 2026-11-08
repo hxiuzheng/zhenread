@@ -69,6 +69,15 @@ async fn main {
     assert_eq(result.exit_code(), expected)
   }
   verify_report_files()
+  let paired = @shell.Cmd("moon", [
+    "run", "cmd/main", "--", "compare", "examples/revision-before.vtt",
+    "examples/revision-after.vtt", "--output", "html",
+  ]).output()
+  assert_eq(paired.exit_code(), 1)
+  assert_true(paired.stdout().contains("文字与时间变更"))
+  assert_true(paired.stdout().contains("这里展示原始术语"))
+  assert_true(paired.stdout().contains("这里展示修订术语"))
   println("CLI cases: \{cases.length()} passed.")
   println("Report file checks: creation and overwrite protection passed.")
+  println("Revision HTML: both versions and change reasons verified.")
 }
