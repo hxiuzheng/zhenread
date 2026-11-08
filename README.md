@@ -2,17 +2,33 @@
 
 让字幕在发布之前，更好读一点。
 
-帧读是面向中文课程、短视频和培训内容的字幕质量检查库，使用 MoonBit 实现。输入 SRT 或 WebVTT 文本，输出带规则编号、严重程度和源文件行号的诊断，帮助内容制作者检查发布前的字幕阅读质量。
+帧读是面向课程、短视频和培训内容的字幕质量检查工具，使用 MoonBit 实现。输入 SRT 或 WebVTT 字幕，输出带规则编号、严重程度和源文件行号的诊断，帮助内容制作者在发布前复核字幕。
 
-当前公开批次包含校验核心、JSON/离线 HTML 报告 API 与自动测试。命令行和使用示例将在下一批补充。
+## 命令行
 
-## 运行与验证
-
-需要 MoonBit 工具链和 Node.js；当前默认使用 JavaScript 目标。
+需要 MoonBit 工具链和 Node.js。命令行使用 JavaScript 目标。
 
 ```sh
 git clone https://github.com/hxiuzheng/zhenread.git
 cd zhenread
+moon run cmd/main -- check examples/clean.srt
+moon run cmd/main -- check examples/review.vtt --output json
+moon run cmd/main -- check examples/review.vtt --output html --report preview.html
+```
+
+在浏览器打开生成的 `preview.html`，点击诊断链接定位字幕。命令行按文件扩展名识别 UTF-8 编码的 SRT 和 WebVTT。默认按中文阅读规则检查，使用 `--profile en` 可切换到英文规则。
+
+`--output text|json|html` 选择输出格式，默认是文本。`--report FILE` 将报告写入指定文件，否则输出到终端。
+
+| 退出码 | 含义 |
+| --- | --- |
+| 0 | 检查通过。默认允许警告 |
+| 1 | 有错误，或使用 `--strict` 时有警告 |
+| 2 | 参数无效或文件读写失败 |
+
+## 验证
+
+```sh
 moon check --deny-warn
 moon test --deny-warn
 moon build --deny-warn
