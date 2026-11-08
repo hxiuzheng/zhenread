@@ -73,7 +73,7 @@ pub fn english_profile() -> Profile {
 }
 
 ///|
-fn digits(s : String, width : Int32) -> Int32? {
+fn digits(s : String, width : Int32, max~ : Int32 = 999) -> Int32? {
   if s.length() != width {
     return None
   }
@@ -83,6 +83,9 @@ fn digits(s : String, width : Int32) -> Int32? {
       return None
     }
     n = n * 10 + c.to_int() - '0'.to_int()
+    if n > max {
+      return None
+    }
   }
   Some(n)
 }
@@ -101,14 +104,22 @@ pub fn parse_timestamp(value : String, vtt~ : Bool = false) -> Int32? {
   if parts.length() != 2 {
     return None
   }
-  guard digits(hours, 2) is Some(h) else { return None }
+  let hour_width = hours.length()
+  if hour_width < 2 || (!vtt && hour_width != 2) {
+    return None
+  }
+  guard digits(hours, hour_width, max=596) is Some(h) else { return None }
   guard digits(minutes, 2) is Some(m) else { return None }
   guard digits(parts[0], 2) is Some(s) else { return None }
   guard digits(parts[1], 3) is Some(ms) else { return None }
   if m >= 60 || s >= 60 {
     return None
   }
-  Some(((h * 60 + m) * 60 + s) * 1000 + ms)
+  let remainder_ms = (m * 60 + s) * 1000 + ms
+  if h > (2147483647 - remainder_ms) / 3600000 {
+    return None
+  }
+  Some(h * 3600000 + remainder_ms)
 }
 
 ///|
@@ -124,10 +135,13 @@ pub fn parse(source : String, vtt~ : Bool = false) -> Report {
   let lines = text.split("\n").map(s => s.to_owned()).collect()
   let cues : Array[Cue] = []
   let findings : Array[Finding] = []
-  if vtt &&
-    !(lines[0] == "WEBVTT" ||
-    lines[0].has_prefix("WEBVTT ") ||
-    lines[0].has_prefix("WEBVTT\t")) {
+  let has_header = vtt &&
+    (
+      lines[0] == "WEBVTT" ||
+      lines[0].has_prefix("WEBVTT ") ||
+      lines[0].has_prefix("WEBVTT\t")
+    )
+  if vtt && !has_header {
     findings.push({
       rule: "VTT_HEADER",
       severity: "error",
@@ -136,7 +150,16 @@ pub fn parse(source : String, vtt~ : Bool = false) -> Report {
       message: "WebVTT must begin with WEBVTT.",
     })
   }
-  let mut i = 0
+  if has_header && lines.length() > 1 && !lines[1].trim().is_empty() {
+    findings.push({
+      rule: "VTT_HEADER",
+      severity: "error",
+      line: 1,
+      cue: "",
+      message: "Insert a blank line after the WebVTT header.",
+    })
+  }
+  let mut i = if has_header { 1 } else { 0 }
   while i < lines.length() {
     if lines[i].trim().is_empty() {
       i += 1
@@ -149,12 +172,11 @@ pub fn parse(source : String, vtt~ : Bool = false) -> Report {
     let first = lines[begin]
     if vtt &&
       (
-        (begin == 0 && first.has_prefix("WEBVTT")) ||
         first == "NOTE" ||
         first.has_prefix("NOTE ") ||
         first.has_prefix("NOTE\t") ||
-        first == "STYLE" ||
-        first == "REGION"
+        first.trim_end() == "STYLE" ||
+        first.trim_end() == "REGION"
       ) {
       continue
     }
@@ -181,7 +203,16 @@ pub fn parse(source : String, vtt~ : Bool = false) -> Report {
       invalid("Missing timing arrow.")
       continue
     }
-    let ending = right.trim().to_owned().split(" ").collect()[0].to_owned()
+    if right.contains("-->") {
+      invalid("Unexpected second timing arrow.")
+      continue
+    }
+    let ending = right
+    .trim()
+    .to_owned()
+    .replace_all(old="\t", new=" ")
+    .split(" ")
+    .collect()[0].to_owned()
     guard parse_timestamp(left.trim().to_owned(), vtt~) is Some(start_ms) else {
       invalid("Invalid start timestamp.")
       continue
@@ -216,17 +247,21 @@ pub fn parse(source : String, vtt~ : Bool = false) -> Report {
 /// Complex grapheme clusters may count as several values; thresholds are configurable.
 pub fn visible_count(text : String) -> Int32 {
   let mut count = 0
-  let mut tag = false
+  let mut pending_tag : Int32? = None
   for c in text.iter() {
     if c == '<' {
-      tag = true
-    } else if c == '>' && tag {
-      tag = false
-    } else if !tag && c != ' ' && c != '\t' && c != '\n' && c != '\r' {
-      count += 1
+      count += pending_tag.unwrap_or(0)
+      pending_tag = Some(1)
+    } else if c == '>' && pending_tag is Some(_) {
+      pending_tag = None
+    } else if c != ' ' && c != '\t' && c != '\n' && c != '\r' {
+      match pending_tag {
+        Some(n) => pending_tag = Some(n + 1)
+        None => count += 1
+      }
     }
   }
-  count
+  count + pending_tag.unwrap_or(0)
 }
 
 ///|

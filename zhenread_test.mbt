@@ -141,3 +141,53 @@ test "reading speed boundary is exact and configurable" {
   let r = @zhenread.check("1\n00:00:00,000 --> 00:00:01,000\nabc", p)
   assert_eq(r.findings[0].rule, "READING_SPEED")
 }
+
+///|
+test "WebVTT allows long hours up to the supported millisecond bound" {
+  assert_eq(
+    @zhenread.parse_timestamp("100:00:00.000", vtt=true),
+    Some(360000000),
+  )
+  assert_eq(
+    @zhenread.parse_timestamp("596:31:23.647", vtt=true),
+    Some(2147483647),
+  )
+  assert_eq(@zhenread.parse_timestamp("596:31:23.648", vtt=true), None)
+  assert_eq(@zhenread.parse_timestamp("999999999999:00:00.000", vtt=true), None)
+  assert_eq(@zhenread.parse_timestamp("100:00:00,000"), None)
+}
+
+///|
+test "WebVTT accepts tab separated settings and preserves source lines" {
+  let r = @zhenread.parse(
+    "WEBVTT\n\nSTYLE \t\n::cue { color: white }\n\na\n00:01.000\t-->\t00:03.000\talign:start\nHello",
+    vtt=true,
+  )
+  assert_eq(r.findings.length(), 0)
+  assert_eq(r.cues.length(), 1)
+  assert_eq(r.cues[0].line, 6)
+  assert_eq(r.cues[0].end_ms, 3000)
+}
+
+///|
+test "missing header separator diagnoses and recovers the first cue" {
+  let r = @zhenread.parse("WEBVTT\n00:01.000 --> 00:03.000\nHello", vtt=true)
+  assert_eq(r.findings[0].rule, "VTT_HEADER")
+  assert_eq(r.cues[0].line, 2)
+}
+
+///|
+test "duplicate timing arrows are diagnosed and the next cue is retained" {
+  let r = @zhenread.parse(
+    "WEBVTT\n\n00:01.000 --> 00:03.000 --> 00:04.000\nBroken\n\n00:04.000 --> 00:05.000\nHello",
+    vtt=true,
+  )
+  assert_eq(r.findings[0].rule, "CUE_SYNTAX")
+  assert_eq(r.cues[0].line, 6)
+}
+
+///|
+test "unfinished angle markup leaves literal text visible" {
+  assert_eq(@zhenread.visible_count("x < y"), 3)
+  assert_eq(@zhenread.visible_count("<b>字幕</b> <未结束"), 6)
+}
