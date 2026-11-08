@@ -28,12 +28,13 @@ moon run cmd/main -- check examples/review.vtt --output html --report preview.ht
 
 ## 验证
 
+在仓库根目录运行以下命令。脚本执行静态检查、核心测试、构建、格式校验，并验证命令行的示例输入和退出码。
+
 ```sh
-moon check --deny-warn
-moon test --deny-warn
-moon build --deny-warn
-moon fmt --check
+moon run tools/verify.mbtx
 ```
+
+GitHub Actions 在推送和拉取请求中运行同一份验证脚本。
 
 ## 校验接口
 

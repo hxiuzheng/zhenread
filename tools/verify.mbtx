@@ -1,0 +1,31 @@
+import {
+  "moonbitlang/async@0.21.3",
+  "moonbitlang/async@0.21.3/shell",
+}
+
+async fn main {
+  let checks = [
+    ["check", "--deny-warn"],
+    ["test", "--deny-warn"],
+    ["build", "--deny-warn"],
+    ["fmt", "--check"],
+  ]
+  for args in checks {
+    @shell.Cmd("moon", args).run()
+  }
+  let cases : Array[(Array[String], Int)] = [
+    (["--help"], 0),
+    (["check", "examples/clean.srt"], 0),
+    (["check", "examples/review.vtt"], 0),
+    (["check", "examples/review.vtt", "--strict"], 1),
+    (["check", "examples/clean.srt", "--output", "json"], 0),
+    (["check", "examples/clean.srt", "--profile", "invalid"], 2),
+    (["check", "examples/clean.srt", "--profile"], 2),
+    (["check", "missing.srt"], 2),
+  ]
+  for (args, expected) in cases {
+    let result = @shell.Cmd("moon", ["run", "cmd/main", "--"] + args).output()
+    assert_eq(result.exit_code(), expected)
+  }
+  println("CLI cases: \{cases.length()} passed.")
+}
