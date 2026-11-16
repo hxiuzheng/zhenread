@@ -13,3 +13,4 @@ jobs:
       - uses: hustcer/setup-moonbit@87e2bdf5cf20d3b6f5c5f266a8a513f503bb5b76 # v1
       - run: moon update
       - run: moon run tools/verify.mbtx
+      - run: moon test --target wasm-gc --deny-warn timeline

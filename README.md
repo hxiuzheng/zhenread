@@ -1,8 +1,18 @@
 # 帧读 ZhenRead
 
-让字幕在发布之前，更好读一点。
+帧读是用于版本回归的 MoonBit 时间轴分析库与命令行工具。它按轨道比较两版区间，输出丢失覆盖、新增覆盖和并发数量变化，可检查剪辑空档、预约冲突和时间标注。字幕工具支持 SRT、WebVTT 单文件质检和按字幕 ID 做修订复核。
 
-帧读使用 MoonBit 实现字幕质量检查和修订回归。内容制作者可以检查单份 SRT 或 WebVTT，也可以比较审定版与待发布版 WebVTT，查看字幕增删、改字和时间漂移。
+## 通用时间轴对比
+
+两版输入各包含一组 `{track, start, end}` 区间。轨道以名称区分，端点为采用相同单位和原点的有符号 64 位整数，JSON 中用十进制字符串表示。区间包含起点，排除终点。相接的区间不会制造重叠。
+
+```sh
+moon run cmd/main -- coverage examples/timeline/edit-before.json examples/timeline/edit-after.json
+```
+
+示例结果为 `video` 在 `[48,54)` 从覆盖 1 次降到 0 次。CLI 同样接受 SRT 和 WebVTT，并将字幕映射至以毫秒计的 `subtitles` 轨道。退出码 `0` 表示覆盖相同，`1` 表示存在差异，`2` 表示输入、参数或文件读写有误。MoonBit 调用者可直接使用 `hxiuzheng/zhenread/timeline` 导出的 `compare_coverage`。
+
+更多示例、JSON 输出及边界说明见 [时间轴覆盖对比](docs/TIMELINE.md)。
 
 ## 命令行
 

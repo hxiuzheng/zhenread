@@ -22,6 +22,8 @@
 - [moonbit-community/markitdown](https://github.com/moonbit-community/markitdown)
 - [AFK-surf/still.fail](https://github.com/AFK-surf/still.fail)
 
+通用时间轴模块也有相邻项目。[IntervalTree](https://mooncakes.io/docs/kesmeey/IntervalTree) 提供动态区间查询，[moonbitemporal](https://mooncakes.io/docs/yyyt0807/moonbitemporal) 跟踪双时态事实与修订，[moonelan](https://mooncakes.io/docs/y666-sos/moonelan) 面向 ELAN EAF 标注。帧读新增包以两份通用轨道快照为输入，通过扫描线生成每轨覆盖计数的变化片段，不要求领域格式或条目 ID。上述项目用于方案对照，未引入其实现。
+
 格式参考入口：
 
 - [WebVTT](https://www.w3.org/TR/webvtt1/)

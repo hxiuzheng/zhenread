@@ -1,6 +1,6 @@
 name = "hxiuzheng/zhenread"
 
-version = "0.1.0"
+version = "0.2.0"
 
 readme = "README.md"
 
@@ -8,11 +8,11 @@ repository = "https://github.com/hxiuzheng/zhenread"
 
 license = "Apache-2.0"
 
-keywords = [ "subtitle", "srt", "webvtt", "quality" ]
+keywords = [ "timeline", "interval", "coverage", "subtitle", "webvtt" ]
 
 preferred_target = "js"
 
-description = "ZhenRead: explainable subtitle quality checks for Chinese and English"
+description = "ZhenRead: per-track timeline coverage regression and subtitle quality checks"
 
 import {
   "moonbitlang/x@0.5.5",
