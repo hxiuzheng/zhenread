@@ -1,0 +1,44 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "hxiuzheng/zhenread/timeline"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+}
+
+// Values
+pub fn compare_coverage(ArrayView[Span], ArrayView[Span]) -> Array[CoverageChange] raise CoverageError
+
+// Errors
+#derive(@debug.Debug)
+pub suberror CoverageError {
+  InvalidSpan(side~ : String, index~ : Int32, reason~ : String)
+}
+pub fn CoverageError::to_repr(Self) -> @debug.Repr
+
+// Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub struct CoverageChange {
+  track : String
+  start : Int64
+  end : Int64
+  before : Int64
+  after : Int64
+}
+pub fn CoverageChange::equal(Self, Self) -> Bool
+pub fn CoverageChange::not_equal(Self, Self) -> Bool
+pub fn CoverageChange::to_json(Self) -> @json.Json
+pub fn CoverageChange::to_repr(Self) -> @debug.Repr
+
+#derive(@json.FromJson, @json.ToJson)
+pub(all) struct Span {
+  track : String
+  start : Int64
+  end : Int64
+}
+pub fn Span::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Span::to_json(Self) -> @json.Json
+
+// Type aliases
+
+// Traits
