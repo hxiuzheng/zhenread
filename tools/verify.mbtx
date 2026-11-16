@@ -80,4 +80,31 @@ async fn main {
   println("CLI cases: \{cases.length()} passed.")
   println("Report file checks: creation and overwrite protection passed.")
   println("Revision HTML: both versions and change reasons verified.")
+  verify_coverage()
+}
+
+async fn verify_coverage() -> Unit {
+  let suite = [
+    ("edit", "[{\"track\":\"video\",\"start\":\"48\",\"end\":\"54\",\"before\":\"1\",\"after\":\"0\"}]"),
+    ("booking", "[{\"track\":\"camera-a\",\"start\":\"585\",\"end\":\"600\",\"before\":\"1\",\"after\":\"2\"}]"),
+    ("labels", "[{\"track\":\"background\",\"start\":\"2500\",\"end\":\"3500\",\"before\":\"0\",\"after\":\"1\"}]"),
+  ]
+  let command = ["run", "cmd/main", "--", "coverage"]
+  for (name, expected) in suite {
+    let before = "examples/timeline/\{name}-before.json"
+    let after = "examples/timeline/\{name}-after.json"
+    let changed = @shell.Cmd("moon", command + [before, after]).output()
+    assert_eq(changed.exit_code(), 1)
+    assert_eq(changed.stdout().trim().to_owned(), expected)
+  }
+  let same = @shell.Cmd("moon", command + ["examples/clean.srt", "examples/clean.srt"]).output()
+  assert_eq(same.exit_code(), 0)
+  assert_eq(same.stdout().trim().to_owned(), "[]")
+  let subtitles = @shell.Cmd("moon", command + ["examples/revision-before.vtt", "examples/revision-after.vtt"]).output()
+  assert_eq(subtitles.exit_code(), 1)
+  assert_true(subtitles.stdout().contains("\"track\":\"subtitles\""))
+  let rejected = @shell.Cmd("moon", command + ["examples/review.vtt", "examples/recovery.vtt"]).output()
+  assert_eq(rejected.exit_code(), 2)
+  assert_true(rejected.stdout().contains("Invalid candidate subtitle timeline."))
+  println("Coverage CLI: 3 JSON demos, identical and changed subtitles, and invalid input verified.")
 }

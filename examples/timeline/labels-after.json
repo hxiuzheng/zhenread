@@ -1,0 +1,5 @@
+[
+  {"track":"speech","start":"0","end":"4000"},
+  {"track":"speech","start":"4000","end":"10000"},
+  {"track":"background","start":"2500","end":"3500"}
+]

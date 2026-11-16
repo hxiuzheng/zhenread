@@ -143,9 +143,11 @@ fn main {
     run_check(args)
   } else if args.length() >= 4 && args[1] == "compare" {
     run_compare(args)
+  } else if args.length() >= 4 && args[1] == "coverage" {
+    run_coverage(args)
   } else {
     println(
-      "ZhenRead / 帧读\nUsage: check INPUT [--profile zh|en] [--output text|json|html] [--report FILE] [--strict]\n       compare BASELINE.vtt CANDIDATE.vtt [--tolerance-ms N] [--output text|json|html] [--report FILE]\nExit: 0 accepted, 1 findings or changes, 2 invalid input or usage/I/O error",
+      "ZhenRead / 帧读\nUsage: check INPUT [--profile zh|en] [--output text|json|html] [--report FILE] [--strict]\n       compare BASELINE.vtt CANDIDATE.vtt [--tolerance-ms N] [--output text|json|html] [--report FILE]\n       coverage BASELINE CANDIDATE [--report FILE]\n       coverage inputs: JSON, SRT, or WebVTT\nExit: 0 accepted, 1 findings or changes, 2 invalid input or usage/I/O error",
     )
     @sys.exit(if args.length() == 2 && args[1] == "--help" { 0 } else { 2 })
   }

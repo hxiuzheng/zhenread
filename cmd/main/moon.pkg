@@ -1,7 +1,9 @@
 import {
   "hxiuzheng/zhenread" @lib,
+  "hxiuzheng/zhenread/timeline",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
+  "moonbitlang/core/json",
   "moonbitlang/core/string",
   "moonbitlang/x/fs",
   "moonbitlang/x/sys",
